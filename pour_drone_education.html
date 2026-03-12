@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POUR 드론 진단 AI 교육</title>
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #045b67;
+    --primary-light: #067a8a;
+    --primary-dark: #033d47;
+    --primary-bg: #e8f4f6;
+    --primary-bg2: #d0eaee;
+    --accent: #00c4d4;
+    --text-primary: #111827;
+    --text-secondary: #4b5563;
+    --text-muted: #9ca3af;
+    --bg: #f8fafc;
+    --white: #ffffff;
+    --border: #e5e7eb;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 16px rgba(4,91,103,0.10);
+    --shadow-lg: 0 12px 40px rgba(4,91,103,0.18);
+    --radius: 20px;
+    --radius-sm: 12px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body { font-family:'Pretendard',-apple-system,BlinkMacSystemFont,sans-serif; background:var(--bg); color:var(--text-primary); line-height:1.6; -webkit-font-smoothing:antialiased; }
+
+  nav { position:fixed;top:0;left:0;right:0;z-index:200;background:rgba(255,255,255,.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 32px;height:64px;display:flex;align-items:center;justify-content:space-between; }
+  .nav-logo { font-size:18px;font-weight:800;color:var(--primary);letter-spacing:-.5px; }
+  .nav-links { display:flex;gap:4px;list-style:none; }
+  .nav-links a { text-decoration:none;font-size:13px;font-weight:500;color:var(--text-secondary);padding:8px 14px;border-radius:8px;transition:all .2s; }
+  .nav-links a:hover { background:var(--primary-bg);color:var(--primary); }
+
+  .hero { padding:160px 32px 100px;max-width:1100px;margin:0 auto;text-align:center; }
+  .hero-badge { display:inline-flex;align-items:center;gap:8px;background:var(--primary-bg);color:var(--primary);font-size:13px;font-weight:600;padding:8px 18px;border-radius:100px;margin-bottom:32px;border:1px solid var(--primary-bg2); }
+  .hero-badge span { width:7px;height:7px;background:var(--accent);border-radius:50%;display:inline-block;animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.8);} }
+  .hero h1 { font-size:clamp(36px,5vw,62px);font-weight:900;line-height:1.15;letter-spacing:-2px;margin-bottom:24px; }
+  .hero h1 em { font-style:normal;color:var(--primary); }
+  .hero p { font-size:18px;color:var(--text-secondary);max-width:540px;margin:0 auto 48px;line-height:1.8; }
+  .hero-scroll { display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted);font-weight:500;animation:bounce 2s infinite; }
+  @keyframes bounce { 0%,100%{transform:translateY(0);}50%{transform:translateY(6px);} }
+
+  section { padding:80px 32px; }
+  .container { max-width:1000px;margin:0 auto; }
+  .section-label { display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--primary);margin-bottom:16px; }
+  .section-label::before { content:'';width:20px;height:2px;background:var(--primary);border-radius:2px; }
+  .section-title { font-size:clamp(26px,3.5vw,40px);font-weight:800;letter-spacing:-1.5px;line-height:1.2;margin-bottom:12px; }
+  .section-sub { font-size:16px;color:var(--text-secondary);line-height:1.75;margin-bottom:56px; }
+  .section-divider { height:1px;background:var(--border);margin:0 32px; }
+
+  /* ERA */
+  .era-section { background:var(--white); }
+  .era-flow { display:flex;align-items:center;justify-content:center;gap:12px;margin:32px 0;flex-wrap:wrap; }
+  .era-chip { background:var(--white);border:1.5px solid var(--border);border-radius:100px;padding:8px 20px;font-size:13px;font-weight:600;color:var(--text-secondary);box-shadow:var(--shadow-sm); }
+  .era-chip.active { background:var(--primary);color:white;border-color:var(--primary); }
+  .arrow-icon { color:var(--text-muted);font-size:18px; }
+  .era-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:20px; }
+  .era-card { border-radius:var(--radius);padding:36px 28px;transition:transform .3s,box-shadow .3s; }
+  .era-card:hover { transform:translateY(-4px);box-shadow:var(--shadow-lg); }
+  .era-card.era-1{background:#f1f5f9;} .era-card.era-2{background:#f0f9ff;} .era-card.era-3{background:var(--primary-bg);}
+  .era-num { font-size:13px;font-weight:700;letter-spacing:1px;color:var(--text-muted);margin-bottom:12px; }
+  .era-icon { font-size:36px;margin-bottom:20px;display:block; }
+  .era-title { font-size:20px;font-weight:800;letter-spacing:-.5px;margin-bottom:12px; }
+  .era-desc { font-size:14px;color:var(--text-secondary);line-height:1.75;margin-bottom:24px; }
+  .era-problem { background:rgba(255,255,255,.7);border-radius:var(--radius-sm);padding:16px 18px;border-left:3px solid; }
+  .era-1 .era-problem{border-color:#94a3b8;} .era-2 .era-problem{border-color:#3b82f6;} .era-3 .era-problem{border-color:var(--primary);}
+  .era-problem-label { font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:6px; }
+  .era-problem p { font-size:13px;color:var(--text-secondary);line-height:1.7; }
+
+  /* WHY */
+  .why-section { background:var(--bg); }
+  .why-grid { display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:36px; }
+  .why-card { background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius);padding:32px;box-shadow:var(--shadow-sm); }
+  .why-card.problem-card { border-top:4px solid #f87171; }
+  .why-card.solution-card { border-top:4px solid var(--primary); }
+  .why-card-label { font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:14px; }
+  .why-card.problem-card .why-card-label{color:#ef4444;} .why-card.solution-card .why-card-label{color:var(--primary);}
+  .why-card-title { font-size:18px;font-weight:800;letter-spacing:-.5px;margin-bottom:12px; }
+  .why-card-desc { font-size:14px;color:var(--text-secondary);line-height:1.8; }
+  .why-card-desc strong { color:var(--text-primary);font-weight:700; }
+  .why-flow-box { background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius);padding:36px;box-shadow:var(--shadow-sm); }
+  .why-flow-title { font-size:16px;font-weight:800;margin-bottom:28px;display:flex;align-items:center;gap:10px; }
+  .why-flow-steps { display:flex;align-items:stretch;gap:0; }
+  .why-flow-step { flex:1;text-align:center;position:relative; }
+  .why-flow-step:not(:last-child)::after { content:'→';position:absolute;right:-12px;top:28px;font-size:20px;color:var(--text-muted); }
+  .why-step-icon-wrap { width:56px;height:56px;border-radius:50%;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:22px; }
+  .step-drone .why-step-icon-wrap{background:#e0f2fe;} .step-ai .why-step-icon-wrap{background:var(--primary-bg);} .step-report .why-step-icon-wrap{background:#fef3c7;}
+  .why-step-title { font-size:14px;font-weight:800;margin-bottom:6px; }
+  .why-step-badge { display:inline-block;font-size:11px;font-weight:700;padding:4px 12px;border-radius:100px;margin-bottom:8px; }
+  .badge-outsource{background:#fee2e2;color:#dc2626;} .badge-pour{background:var(--primary-bg);color:var(--primary);}
+  .why-step-desc { font-size:12px;color:var(--text-secondary);line-height:1.6; }
+  .why-tip { margin-top:24px;padding:16px 20px;background:var(--primary-bg);border-radius:var(--radius-sm);font-size:13px;color:var(--primary);font-weight:600;display:flex;align-items:center;gap:10px; }
+
+  /* AI SECTION */
+  .ai-section { background:linear-gradient(160deg,var(--primary-dark) 0%,var(--primary) 50%,var(--primary-light) 100%);color:white; }
+  .ai-section .section-label{color:var(--accent);} .ai-section .section-label::before{background:var(--accent);}
+  .ai-section .section-title{color:white;} .ai-section .section-sub{color:rgba(255,255,255,.7);}
+  .map-score-box { background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:var(--radius);padding:40px;margin-bottom:40px;backdrop-filter:blur(10px); }
+  .map-score-top { display:flex;align-items:flex-start;gap:40px;flex-wrap:wrap; }
+  .map-big-num { font-size:80px;font-weight:900;letter-spacing:-4px;line-height:1;color:var(--accent); }
+  .map-info { flex:1;min-width:220px; }
+  .map-title { font-size:22px;font-weight:800;margin-bottom:12px;letter-spacing:-.5px; }
+  .map-desc { font-size:14px;line-height:1.8;color:rgba(255,255,255,.75); }
+  .map-bar-wrap { margin-top:28px; }
+  .map-bar-label { display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,.6);margin-bottom:8px;font-weight:500; }
+  .map-bar-bg { height:12px;background:rgba(255,255,255,.1);border-radius:100px;overflow:hidden; }
+  .map-bar-fill { height:100%;background:linear-gradient(90deg,var(--accent),#00e5f7);border-radius:100px;width:0%;transition:width 1.5s cubic-bezier(.4,0,.2,1); }
+  .map-levels { display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px; }
+  .map-level { background:rgba(255,255,255,.06);border-radius:var(--radius-sm);padding:14px 16px;text-align:center; }
+  .map-level-score { font-size:18px;font-weight:800;margin-bottom:4px; }
+  .map-level-label { font-size:11px;color:rgba(255,255,255,.55);font-weight:500; }
+  .level-low .map-level-score{color:#f87171;} .level-mid .map-level-score{color:#fbbf24;} .level-high .map-level-score{color:var(--accent);}
+  .ai-features { display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin-top:40px; }
+  .ai-feature-card { background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:var(--radius);padding:28px;transition:background .3s; }
+  .ai-feature-card:hover { background:rgba(255,255,255,.13); }
+  .ai-feature-icon { font-size:28px;margin-bottom:14px;display:block; }
+  .ai-feature-title { font-size:16px;font-weight:700;margin-bottom:8px; }
+  .ai-feature-desc { font-size:13px;color:rgba(255,255,255,.65);line-height:1.75; }
+
+  /* PREVIEW */
+  .preview-section-label { font-size:14px;font-weight:700;color:rgba(255,255,255,.7);margin-bottom:16px;margin-top:48px; }
+  .preview-grid { display:grid;grid-template-columns:1fr 1fr;gap:20px; }
+  .preview-card { background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:transform .3s,box-shadow .3s,border-color .3s;position:relative; }
+  .preview-card:hover { transform:translateY(-4px);box-shadow:0 20px 50px rgba(0,0,0,.3);border-color:var(--accent); }
+  .preview-canvas-wrap { position:relative;height:170px;overflow:hidden; }
+  .preview-canvas-wrap canvas { width:100%;height:100%;display:block; }
+  .preview-overlay { position:absolute;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .3s; }
+  .preview-card:hover .preview-overlay { opacity:1; }
+  .preview-overlay-btn { background:rgba(255,255,255,.9);color:var(--primary);border-radius:100px;padding:10px 22px;font-size:13px;font-weight:700; }
+  .preview-info { padding:16px 18px; }
+  .preview-type { font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:5px; }
+  .preview-title { font-size:14px;font-weight:700;margin-bottom:3px; }
+  .preview-desc { font-size:12px;color:rgba(255,255,255,.5);line-height:1.5; }
+  .preview-live { position:absolute;top:10px;right:10px;background:rgba(0,196,212,.2);border:1px solid rgba(0,196,212,.4);color:var(--accent);border-radius:100px;padding:3px 9px;font-size:10px;font-weight:700;display:flex;align-items:center;gap:4px; }
+  .live-dot { width:5px;height:5px;background:var(--accent);border-radius:50%;animation:pulse 1.5s infinite; }
+
+  /* PREVIEW EMPTY STATE */
+  .preview-empty { position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:rgba(4,91,103,0.25);border:2px dashed rgba(0,196,212,0.25);transition:background .2s,border-color .2s; }
+  .preview-card:hover .preview-empty { background:rgba(4,91,103,0.38);border-color:rgba(0,196,212,0.5); }
+  .preview-empty-icon { font-size:28px;margin-bottom:4px; }
+  .preview-empty-text { font-size:13px;font-weight:700;color:rgba(255,255,255,.85); }
+  .preview-empty-sub { font-size:11px;color:rgba(255,255,255,.45); }
+  .preview-canvas-wrap.has-image .preview-empty { display:none; }
+  .preview-canvas-wrap.has-image canvas { display:none; }
+  .preview-canvas-wrap.has-image .preview-live { display:none; }
+  .preview-img-el { display:none;width:100%;height:100%;object-fit:cover; }
+  .preview-canvas-wrap.has-image .preview-img-el { display:block; }
+
+  /* DELIVERY */
+  .delivery-box{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:var(--radius);padding:28px 32px;margin-top:28px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;}
+  .delivery-icon{font-size:36px;}
+  .delivery-text strong{display:block;font-size:16px;font-weight:700;margin-bottom:6px;}
+  .delivery-text p{font-size:13px;color:rgba(255,255,255,.65);line-height:1.7;}
+  .delivery-highlight{margin-left:auto;background:rgba(0,196,212,.15);border:1px solid rgba(0,196,212,.3);border-radius:var(--radius-sm);padding:16px 24px;text-align:center;}
+  .delivery-days{font-size:32px;font-weight:900;color:var(--accent);letter-spacing:-1px;line-height:1;}
+  .delivery-label{font-size:12px;color:rgba(255,255,255,.55);margin-top:4px;font-weight:500;}
+
+  /* APPLY */
+  .apply-section{background:var(--white);}
+  .apply-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:48px;}
+  .apply-step{text-align:center;position:relative;}
+  .apply-step:not(:last-child)::after{content:'→';position:absolute;top:24px;right:-12px;font-size:18px;color:var(--text-muted);}
+  .step-circle{width:48px;height:48px;background:var(--primary-bg);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;margin:0 auto 14px;font-weight:800;color:var(--primary);}
+  .step-title{font-size:14px;font-weight:700;margin-bottom:6px;}
+  .step-desc{font-size:12px;color:var(--text-secondary);line-height:1.6;}
+  .form-card{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-sm);}
+  .form-card-header{background:var(--primary);padding:20px 28px;display:flex;align-items:center;gap:12px;}
+  .form-card-title{font-size:16px;font-weight:700;color:white;}
+  .form-card-body{padding:28px;}
+  .form-row{display:grid;grid-template-columns:140px 1fr;border-bottom:1px solid var(--border);align-items:stretch;}
+  .form-row:last-child{border-bottom:none;}
+  .form-label{font-size:12px;font-weight:700;color:var(--text-secondary);background:#f8fafc;padding:16px 18px;border-right:1px solid var(--border);display:flex;align-items:center;}
+  .form-value{font-size:14px;color:var(--text-primary);padding:16px 18px;line-height:1.6;}
+  .form-value.highlight{color:var(--primary);font-weight:600;}
+  .caution-box{background:#fffbeb;border:1px solid #fde68a;border-radius:var(--radius-sm);padding:18px 20px;margin-top:20px;display:flex;gap:12px;align-items:flex-start;}
+  .caution-text{font-size:13px;color:#92400e;line-height:1.7;}
+  .caution-text strong{font-weight:700;}
+
+  /* ETC */
+  .etc-section{background:var(--bg);}
+  .etc-card{background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius);padding:32px;box-shadow:var(--shadow-sm);}
+  .etc-title{font-size:18px;font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+  .etc-items{display:flex;flex-direction:column;gap:12px;}
+  .etc-item{display:flex;align-items:flex-start;gap:12px;padding:16px;background:var(--bg);border-radius:var(--radius-sm);border:1px solid var(--border);}
+  .etc-dot{width:8px;height:8px;background:var(--primary);border-radius:50%;flex-shrink:0;margin-top:6px;}
+  .etc-item-text{font-size:14px;color:var(--text-secondary);line-height:1.7;}
+  .etc-item-text strong{color:var(--text-primary);font-weight:600;}
+
+  /* QNA */
+  .qna-section{background:var(--white);}
+  .qna-list{display:flex;flex-direction:column;gap:12px;}
+  .qna-item{border:1.5px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;transition:border-color .2s;}
+  .qna-item.open{border-color:var(--primary);}
+  .qna-q{padding:20px 24px;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:16px;user-select:none;background:var(--white);transition:background .2s;}
+  .qna-item.open .qna-q{background:var(--primary-bg);}
+  .qna-q-text{display:flex;gap:12px;align-items:flex-start;}
+  .q-badge{flex-shrink:0;width:26px;height:26px;background:var(--primary-bg);color:var(--primary);border-radius:50%;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;}
+  .qna-item.open .q-badge{background:var(--primary);color:white;}
+  .qna-toggle{flex-shrink:0;font-size:18px;color:var(--text-muted);transition:transform .3s;}
+  .qna-item.open .qna-toggle{transform:rotate(180deg);color:var(--primary);}
+  .qna-a{padding:0 24px;font-size:14px;color:var(--text-secondary);line-height:1.8;max-height:0;overflow:hidden;transition:max-height .4s ease,padding .3s;}
+  .qna-item.open .qna-a{max-height:300px;padding:0 24px 20px;}
+
+  /* LIGHTBOX */
+  .lightbox{position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.9);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s;}
+  .lightbox.open{opacity:1;pointer-events:all;}
+  .lightbox-inner{max-width:920px;width:92%;position:relative;transform:scale(.95);transition:transform .3s;}
+  .lightbox.open .lightbox-inner{transform:scale(1);}
+  .lb-canvas-wrap{border-radius:var(--radius);overflow:hidden;background:#0a1628;}
+  .lb-canvas-wrap canvas{width:100%;display:block;}
+  .lb-meta{margin-top:20px;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+  .lb-title{color:white;font-size:18px;font-weight:800;letter-spacing:-.5px;}
+  .lb-desc{color:rgba(255,255,255,.5);font-size:13px;margin-top:4px;}
+  .lb-close{position:absolute;top:-16px;right:-16px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:white;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s;}
+  .lb-close:hover{background:rgba(255,255,255,.25);}
+
+  footer{background:var(--primary-dark);color:rgba(255,255,255,.55);text-align:center;padding:40px 32px;font-size:13px;line-height:1.8;}
+  footer strong{color:rgba(255,255,255,.85);}
+
+  .fade-up{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease;}
+  .fade-up.visible{opacity:1;transform:translateY(0);}
+  .fade-up:nth-child(2){transition-delay:.1s;}.fade-up:nth-child(3){transition-delay:.2s;}.fade-up:nth-child(4){transition-delay:.3s;}
+
+  @media(max-width:768px){
+    nav{padding:0 20px;}.nav-links{display:none;}section{padding:60px 20px;}.hero{padding:120px 20px 80px;}
+    .era-grid,.ai-features,.preview-grid,.why-grid{grid-template-columns:1fr;}
+    .apply-steps{grid-template-columns:1fr 1fr;gap:24px;}.apply-step::after{display:none;}
+    .map-score-top{flex-direction:column;gap:20px;}.delivery-highlight{margin-left:0;}
+    .form-row{grid-template-columns:1fr;}.form-label{border-right:none;border-bottom:1px solid var(--border);}
+    .why-flow-steps{flex-direction:column;gap:20px;}.why-flow-step::after{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">POUR · 드론진단 AI</div>
+  <ul class="nav-links">
+    <li><a href="#era">진단 역사</a></li>
+    <li><a href="#why">전략적 배경</a></li>
+    <li><a href="#ai">POUR AI</a></li>
+    <li><a href="#apply">신청 방법</a></li>
+    <li><a href="#etc">기타 안내</a></li>
+    <li><a href="#qna">Q&A</a></li>
+  </ul>
+</nav>
+
+<section class="hero">
+  <div class="hero-badge"><span></span> POUR 공식 교육 자료 · 2026</div>
+  <h1>드론으로 바꾸는<br><em>외벽 진단의 미래</em></h1>
+  <p>육안 점검에서 AI 기반 정밀 진단까지 — POUR가 개발한 딥러닝 드론 진단 솔루션을 소개합니다.</p>
+  <div class="hero-scroll">↓ 스크롤하여 시작</div>
+</section>
+
+<section id="era" class="era-section">
+  <div class="container">
+    <div class="section-label">진단 기술의 역사</div>
+    <h2 class="section-title">외벽 진단, 어디까지 왔나</h2>
+    <p class="section-sub">외벽 진단 기술은 크게 3단계로 발전해 왔습니다.<br>각 시대마다 새로운 기술이 도입됐지만, 근본적인 문제는 여전히 남아 있었습니다.</p>
+    <div class="era-flow">
+      <div class="era-chip">육안 점검</div><span class="arrow-icon">→</span>
+      <div class="era-chip">드론 + 인력</div><span class="arrow-icon">→</span>
+      <div class="era-chip">드론 + AI</div><span class="arrow-icon">→</span>
+      <div class="era-chip active">POUR AI 솔루션</div>
+    </div>
+    <div class="era-grid">
+      <div class="era-card era-1 fade-up">
+        <div class="era-num">ERA 01</div><span class="era-icon">👁️</span>
+        <div class="era-title">육안 점검 시대</div>
+        <p class="era-desc">사람이 직접 건물 외벽을 눈으로 확인하던 시대. 가장 기초적인 방식으로 진단을 진행했습니다.</p>
+        <div class="era-problem"><div class="era-problem-label">⚠ 핵심 문제</div><p>고소지대, 협소한 공간 등 사람이 접근하기 어려운 곳은 점검 자체가 불가능했습니다.</p></div>
+      </div>
+      <div class="era-card era-2 fade-up">
+        <div class="era-num">ERA 02</div><span class="era-icon">🚁</span>
+        <div class="era-title">드론 촬영 + 인력 판단</div>
+        <p class="era-desc">드론으로 고해상도 영상을 촬영하고, 전문가가 수작업으로 분석하는 방식이 도입됐습니다.</p>
+        <div class="era-problem"><div class="era-problem-label">⚠ 핵심 문제</div><p>한 동 기준 수백~수천 장의 이미지를 사람이 검토해야 했습니다. 객관성이 부족하고, 하자 발견 시 <strong>정확한 위치 특정</strong>이 어려웠습니다.</p></div>
+      </div>
+      <div class="era-card era-3 fade-up">
+        <div class="era-num">ERA 03</div><span class="era-icon">🤖</span>
+        <div class="era-title">드론 + AI 진단</div>
+        <p class="era-desc">이미지 분석에 AI를 도입해 자동화를 시도했지만, 여전히 한계가 존재했습니다.</p>
+        <div class="era-problem"><div class="era-problem-label">⚠ 핵심 문제</div><p>로케이션 특정 문제가 여전히 미해결. AI 러닝 수준에 따라 품질 편차가 크고, 드론 촬영을 위한 <strong>인원·시간·비용</strong> 리소스 부담이 컸습니다.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<section id="why" class="why-section">
+  <div class="container">
+    <div class="section-label">POUR의 전략적 판단</div>
+    <h2 class="section-title">왜 우리가 직접 만들었나</h2>
+    <p class="section-sub">드론 촬영 · AI 진단 · 리포트, 이 세 가지를 모두 외주에 맡기는 건<br>처음부터 구조적으로 취약한 방식이었습니다.</p>
+    <div class="why-grid">
+      <div class="why-card problem-card fade-up">
+        <div class="why-card-label">❌ 완전 외주의 한계</div>
+        <div class="why-card-title">세 가지를 다 해주는 업체, 없다</div>
+        <p class="why-card-desc">
+          드론 촬영 · AI 진단 · 리포트 작성을 <strong>하나의 외주사가 모두 처리</strong>하는 구조를 만들려 했으나, 현실적으로 이 세 영역을 동시에 커버하는 업체를 찾기가 극히 어렵습니다.<br><br>
+          기술 수준이 부족하거나, 단가가 맞지 않는 경우가 대부분입니다. 그리고 더 심각한 문제는 — <strong>업체와의 관계가 조금만 틀어지면, 서비스 전체가 한 번에 사라지는 구조</strong>라는 것입니다.
+        </p>
+      </div>
+      <div class="why-card solution-card fade-up">
+        <div class="why-card-label">✅ POUR의 선택</div>
+        <div class="why-card-title">촬영만 외주, 핵심은 우리 기술로</div>
+        <p class="why-card-desc">
+          POUR는 <strong>AI 진단 모델과 리포트 생성 프로그램을 직접 개발</strong>했습니다. 그리고 이 기술을 DOI에 이식(탑재)했습니다.<br><br>
+          이제 DOI는 드론 촬영만 담당하고, <strong>진단과 리포트는 POUR의 기술이 자동으로 처리</strong>합니다. 업체 관계에 흔들리지 않고, 기술 품질을 우리가 직접 통제하는 구조입니다.
+        </p>
+      </div>
+    </div>
+    <div class="why-flow-box">
+      <div class="why-flow-title">🔗 현재 서비스 구조 — 신청 한 번으로 끝까지</div>
+      <div class="why-flow-steps">
+        <div class="why-flow-step step-drone">
+          <div class="why-step-icon-wrap">🚁</div>
+          <div class="why-step-title">드론 촬영</div>
+          <div class="why-step-badge badge-outsource">DOI 외주</div>
+          <div class="why-step-desc">현장 드론 비행 및<br>고해상도 이미지 수집</div>
+        </div>
+        <div class="why-flow-step step-ai">
+          <div class="why-step-icon-wrap">🧠</div>
+          <div class="why-step-title">AI 진단</div>
+          <div class="why-step-badge badge-pour">POUR 기술</div>
+          <div class="why-step-desc">딥러닝 모델로<br>하자 자동 탐지·마킹</div>
+        </div>
+        <div class="why-flow-step step-report">
+          <div class="why-step-icon-wrap">📋</div>
+          <div class="why-step-title">리포트 생성</div>
+          <div class="why-step-badge badge-pour">POUR 기술</div>
+          <div class="why-step-desc">위치·유형·심각도<br>포함 자동 보고서</div>
+        </div>
+      </div>
+      <div class="why-tip">
+        <span>💡</span>
+        신청자 입장에서는 DOI에 요청 한 번이면, 촬영 완료 후 영업일 기준 <strong>약 10일 내</strong>에 AI 진단 리포트까지 자동으로 받을 수 있습니다.
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<section id="ai" class="ai-section">
+  <div class="container">
+    <div class="section-label">POUR AI 솔루션</div>
+    <h2 class="section-title" style="color:white;">POUR가 만든 답</h2>
+    <p class="section-sub">고성능 GPU 기반 딥러닝으로 모든 문제를 해결했습니다.</p>
+
+    <div class="map-score-box">
+      <div class="map-score-top">
+        <div>
+          <div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:8px;font-weight:600;letter-spacing:1px;">MODEL ACCURACY</div>
+          <div class="map-big-num">0.954</div>
+          <div style="font-size:13px;color:rgba(255,255,255,.5);margin-top:6px;font-weight:500;">mAP50 기준</div>
+        </div>
+        <div class="map-info">
+          <div class="map-title">mAP50 = 0.954, 이게 어느 정도일까요?</div>
+          <p class="map-desc">mAP50(평균 정밀도)은 AI 객체 탐지 모델의 정확도를 0~1 사이로 나타낸 지표입니다.<br><br><strong style="color:white;">0.9 이상은 상용 배포 가능 수준</strong>으로, 산업 현장에서 실제 활용할 수 있는 기준점입니다. POUR의 0.954는 전문 연구소 수준의 고정밀 모델로, 하자를 놓칠 확률이 현저히 낮습니다.</p>
+          <div class="map-bar-wrap">
+            <div class="map-bar-label"><span>0.0 (무작위)</span><span>0.954 POUR</span><span>1.0 (완벽)</span></div>
+            <div class="map-bar-bg"><div class="map-bar-fill" id="mapBar"></div></div>
+          </div>
+          <div class="map-levels">
+            <div class="map-level level-low"><div class="map-level-score">~0.6</div><div class="map-level-label">실험적 수준</div></div>
+            <div class="map-level level-mid"><div class="map-level-score">0.7~0.85</div><div class="map-level-label">상용화 검토</div></div>
+            <div class="map-level level-high"><div class="map-level-score">0.9↑</div><div class="map-level-label">산업 적용 가능 ✓</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ai-features">
+      <div class="ai-feature-card"><span class="ai-feature-icon">🗺️</span><div class="ai-feature-title">2D 매핑 이미지 진단</div><p class="ai-feature-desc">촬영된 이미지를 2D 평면 맵으로 변환하여 하자 위치를 정확한 좌표로 마킹합니다. 어느 동, 어느 면, 몇 층인지 즉시 확인 가능합니다.</p></div>
+      <div class="ai-feature-card"><span class="ai-feature-icon">🏗️</span><div class="ai-feature-title">3D 렌더링 파일 진단</div><p class="ai-feature-desc">건물 전체를 3D 모델로 재구성하고 하자 위치를 입체적으로 시각화합니다. 정확한 로케이션 포인트를 직관적으로 확인할 수 있습니다.</p></div>
+      <div class="ai-feature-card"><span class="ai-feature-icon">🧠</span><div class="ai-feature-title">고성능 GPU 딥러닝</div><p class="ai-feature-desc">고성능 GPU를 활용한 딥러닝으로 대용량 이미지도 신속하게 처리합니다. 수천 장의 이미지를 자동 분석해 진단 시간을 획기적으로 단축합니다.</p></div>
+      <div class="ai-feature-card"><span class="ai-feature-icon">📋</span><div class="ai-feature-title">원스톱 리포트 제공</div><p class="ai-feature-desc">POUR의 AI 진단·리포트 기술이 DOI에 탑재되어 있습니다. DOI에 촬영을 의뢰하는 것만으로 완성된 리포트까지 자동으로 받을 수 있습니다.</p></div>
+    </div>
+
+    <!-- PREVIEW -->
+    <div class="preview-section-label">📷 진단 화면 미리보기 — 클릭하면 크게 볼 수 있습니다</div>
+    <div class="preview-grid">
+      <!-- 2D CARD -->
+      <div class="preview-card" id="card2d" onclick="handleCardClick('2d', event)">
+        <input type="file" id="input2d" accept="image/*" style="display:none" onchange="loadCardImage('2d', event)">
+        <div class="preview-canvas-wrap" id="wrap2d">
+          <canvas id="canvas2d" width="480" height="260"></canvas>
+          <img id="img2d" class="preview-img-el" src="" alt="2D 매핑 진단 화면">
+          <div class="preview-live" id="live2d"><span class="live-dot"></span>LIVE PREVIEW</div>
+          <div class="preview-overlay" id="overlay2d">
+            <div class="preview-overlay-btn">🔍 크게 보기</div>
+          </div>
+          <!-- empty state shown before image loaded -->
+          <div class="preview-empty" id="empty2d">
+            <div class="preview-empty-icon">🖼️</div>
+            <div class="preview-empty-text">클릭하여 이미지 업로드</div>
+            <div class="preview-empty-sub">2D 매핑 진단 화면</div>
+          </div>
+        </div>
+        <div class="preview-info">
+          <div class="preview-type">2D MAPPING</div>
+          <div class="preview-title">2D 매핑 진단 화면</div>
+          <div class="preview-desc">평면 좌표로 하자 위치를 마킹한 진단 결과</div>
+        </div>
+      </div>
+      <!-- 3D CARD -->
+      <div class="preview-card" id="card3d" onclick="handleCardClick('3d', event)">
+        <input type="file" id="input3d" accept="image/*" style="display:none" onchange="loadCardImage('3d', event)">
+        <div class="preview-canvas-wrap" id="wrap3d">
+          <canvas id="canvas3d" width="480" height="260"></canvas>
+          <img id="img3d" class="preview-img-el" src="" alt="3D 렌더링 진단 화면">
+          <div class="preview-live" id="live3d"><span class="live-dot"></span>LIVE PREVIEW</div>
+          <div class="preview-overlay" id="overlay3d">
+            <div class="preview-overlay-btn">🔍 크게 보기</div>
+          </div>
+          <div class="preview-empty" id="empty3d">
+            <div class="preview-empty-icon">🖼️</div>
+            <div class="preview-empty-text">클릭하여 이미지 업로드</div>
+            <div class="preview-empty-sub">3D 렌더링 진단 화면</div>
+          </div>
+        </div>
+        <div class="preview-info">
+          <div class="preview-type">3D RENDERING</div>
+          <div class="preview-title">3D 렌더링 진단 화면</div>
+          <div class="preview-desc">입체 모델 위에 하자 포인트를 시각화한 결과</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="delivery-box">
+      <div class="delivery-icon">📦</div>
+      <div class="delivery-text">
+        <strong>DOI 외주 촬영 및 리포트 납품 안내</strong>
+        <p>DOI에 의뢰하면 드론 촬영 후 POUR의 AI가 자동으로 진단·리포트를 생성합니다.<br>단지 규모에 따라 기간이 달라질 수 있으며, 아래 일정은 평균 기준입니다.</p>
+      </div>
+      <div class="delivery-highlight"><div class="delivery-days">D+10</div><div class="delivery-label">촬영 완료 후 영업일 기준</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="closeLbOutside(event)">
+  <div class="lightbox-inner">
+    <button class="lb-close" onclick="closeLb()">✕</button>
+    <div class="lb-canvas-wrap">
+      <canvas id="lbCanvas" width="880" height="500"></canvas>
+      <img id="lbImg" style="display:none;width:100%;max-height:80vh;object-fit:contain;border-radius:var(--radius);" src="" alt="">
+    </div>
+    <div class="lb-meta">
+      <div><div class="lb-title" id="lbTitle"></div><div class="lb-desc" id="lbDesc"></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="section-divider"></div>
+
+<section id="apply" class="apply-section">
+  <div class="container">
+    <div class="section-label">신청 안내</div>
+    <h2 class="section-title">외벽 진단 신청 방법</h2>
+    <p class="section-sub">교육 종료 이후 단계별로 진행합니다. 아래 순서를 따라 주세요.</p>
+    <div class="apply-steps">
+      <div class="apply-step fade-up"><div class="step-circle">📱</div><div class="step-title">카톡방 개설</div><p class="step-desc">교육 종료 후 단체 카카오톡방이 개설됩니다</p></div>
+      <div class="apply-step fade-up"><div class="step-circle">🏢</div><div class="step-title">아파트 협의</div><p class="step-desc">촬영 희망일을 아파트측과 사전 합의합니다</p></div>
+      <div class="apply-step fade-up"><div class="step-circle">📝</div><div class="step-title">양식 작성·제출</div><p class="step-desc">하단 양식에 맞춰 카톡방에 업로드합니다</p></div>
+      <div class="apply-step fade-up"><div class="step-circle">✅</div><div class="step-title">DOI 회신</div><p class="step-desc">DOI 담당자가 확인 후 견적/일정을 회신합니다</p></div>
+    </div>
+    <div class="form-card">
+      <div class="form-card-header"><span style="font-size:20px;">📌</span><div class="form-card-title">드론 촬영 견적 요청서 — 작성 양식 예시</div></div>
+      <div class="form-card-body">
+        <div class="form-row"><div class="form-label">▶ 요청 부서 / 담당자</div><div class="form-value">P.M / 이재훈</div></div>
+        <div class="form-row"><div class="form-label">▶ 연락처</div><div class="form-value highlight">010-2620-1258</div></div>
+        <div class="form-row"><div class="form-label">▶ 촬영 대상지 주소</div><div class="form-value">경기도 수원시 장안구 송정로 83 (수원 로얄팰리스) 전체 동</div></div>
+        <div class="form-row"><div class="form-label">▶ 대상 건물 / 구역</div><div class="form-value">아파트</div></div>
+        <div class="form-row"><div class="form-label">▶ 촬영 방식</div><div class="form-value highlight">2D 매핑 방식 또는 3D 렌더링 방식</div></div>
+        <div class="form-row"><div class="form-label">▶ 일정</div><div class="form-value">2026.01.19 ~ 01.30</div></div>
+      </div>
+    </div>
+    <div class="caution-box">
+      <span style="font-size:18px;flex-shrink:0;margin-top:2px;">⚠️</span>
+      <div class="caution-text"><strong>미군 관할지 / 군 관할지 주의사항</strong><br>해당 지역은 드론 비행 허가 심사가 까다롭습니다. <strong>촬영 희망일 최소 2주 전</strong>에 요청하시는 것을 강력히 권장합니다.</div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<section id="etc" class="etc-section">
+  <div class="container">
+    <div class="section-label">기타 안내</div>
+    <h2 class="section-title">알아두실 사항</h2>
+    <p class="section-sub">원활한 서비스 이용을 위해 아래 내용을 꼭 확인해 주세요.</p>
+    <div class="etc-card">
+      <div class="etc-title">🗂️ 드론 서비스 범위 안내</div>
+      <div class="etc-items">
+        <div class="etc-item"><div class="etc-dot"></div><div class="etc-item-text">현재 본 교육에서 안내하는 드론 서비스는 외벽 <strong>'진단'</strong>에 한정됩니다.</div></div>
+        <div class="etc-item"><div class="etc-dot"></div><div class="etc-item-text"><strong>'보수 영역 확인'</strong>, <strong>'시공 완료 후 자료 촬영'</strong> 등 기타 드론 서비스는 각 <strong>영업 담당자가 개별적으로 진행</strong>해 주셔야 합니다.</div></div>
+        <div class="etc-item"><div class="etc-dot"></div><div class="etc-item-text">진단 외 서비스 문의는 해당 현장 담당 영업팀에 별도로 연락해 주시기 바랍니다.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<section id="qna" class="qna-section">
+  <div class="container">
+    <div class="section-label">Q&A</div>
+    <h2 class="section-title">자주 묻는 질문</h2>
+    <p class="section-sub">궁금한 점이 있으시면 아래에서 확인하세요.</p>
+    <div class="qna-list">
+      <div class="qna-item open">
+        <div class="qna-q" onclick="toggleQna(this)"><div class="qna-q-text"><span class="q-badge">Q</span>드론 촬영 시 아파트 주민 동의가 필요한가요?</div><span class="qna-toggle">▾</span></div>
+        <div class="qna-a">일반적으로 아파트 관리사무소 또는 입주자 대표회의의 동의가 필요합니다. 촬영 전 반드시 아파트측과 협의하여 촬영 가능 일정을 확정한 후 견적을 요청해 주세요.</div>
+      </div>
+      <div class="qna-item">
+        <div class="qna-q" onclick="toggleQna(this)"><div class="qna-q-text"><span class="q-badge">Q</span>AI 진단과 리포트는 POUR 기술인가요, DOI가 직접 만드나요?</div><span class="qna-toggle">▾</span></div>
+        <div class="qna-a">촬영은 DOI가 담당하지만, AI 진단과 리포트 생성은 POUR의 기술이 DOI 시스템에 탑재되어 자동으로 처리됩니다. 신청자 입장에서는 DOI에 요청 한 번으로 모든 결과물을 받을 수 있습니다.</div>
+      </div>
+      <div class="qna-item">
+        <div class="qna-q" onclick="toggleQna(this)"><div class="qna-q-text"><span class="q-badge">Q</span>2D 매핑과 3D 렌더링 중 어떤 방식을 선택해야 하나요?</div><span class="qna-toggle">▾</span></div>
+        <div class="qna-a">두 방식 모두 정밀한 로케이션 포인트를 제공하지만 목적에 따라 달라집니다. 전반적인 외벽 상태 파악이 목적이라면 2D 매핑이 빠르고 효율적입니다. 층별 위치를 입체적으로 확인하거나 3D 보고서가 필요한 경우 3D 렌더링을 권장합니다. 비용과 납기 기간도 방식에 따라 달라질 수 있으니 DOI 담당자에게 상세 문의해 주세요.</div>
+      </div>
+      <div class="qna-item">
+        <div class="qna-q" onclick="toggleQna(this)"><div class="qna-q-text"><span class="q-badge">Q</span>촬영 당일 날씨가 나쁘면 어떻게 되나요?</div><span class="qna-toggle">▾</span></div>
+        <div class="qna-a">드론은 강풍, 강우, 짙은 안개 등 악천후 시 비행이 불가합니다. 기상 상황에 따라 촬영이 취소되거나 연기될 수 있으며, 이 경우 DOI 담당자가 사전에 안내해 드립니다. 일정 협의 시 여유 날짜를 함께 확보해 두시기를 권장합니다.</div>
+      </div>
+      <div class="qna-item">
+        <div class="qna-q" onclick="toggleQna(this)"><div class="qna-q-text"><span class="q-badge">Q</span>군 관할지 촬영 허가는 얼마나 걸리나요?</div><span class="qna-toggle">▾</span></div>
+        <div class="qna-a">미군 또는 군 관할 지역은 비행 허가 심사가 엄격하여 일반 지역보다 시간이 더 소요됩니다. 안전하게 촬영 희망일 기준 최소 2주 전에 요청하시기 바랍니다.</div>
+      </div>
+      <div class="qna-item">
+        <div class="qna-q" onclick="toggleQna(this)"><div class="qna-q-text"><span class="q-badge">Q</span>추가 문의는 어떻게 하나요?</div><span class="qna-toggle">▾</span></div>
+        <div class="qna-a">교육 후 개설되는 단체 카카오톡방을 통해 문의하시거나, 담당자(P.M / 이재훈 · 010-2620-1258)에게 직접 연락 주시면 됩니다.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <strong>POUR · 드론 진단 AI 교육 자료</strong><br>
+  본 자료는 내부 교육 목적으로 제작되었으며, 외부 배포를 금합니다.<br>
+  문의: P.M 이재훈 · 010-2620-1258
+</footer>
+
+<script>
+// ── COLOR PALETTE ────────────────────────────────
+const C = { primary:'#045b67', accent:'#00c4d4', red:'#ef4444', orange:'#f59e0b', yellow:'#fbbf24', white:'#ffffff' };
+
+// ── 2D MAPPING DRAW ──────────────────────────────
+function draw2D(canvas, t, large) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  // BG
+  ctx.fillStyle = '#0d1b2a'; ctx.fillRect(0,0,W,H);
+
+  // Grid
+  ctx.strokeStyle = 'rgba(0,196,212,0.06)'; ctx.lineWidth = 1;
+  const gs = large ? 44 : 30;
+  for(let x=0;x<W;x+=gs){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let y=0;y<H;y+=gs){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+
+  // HUD bar
+  ctx.fillStyle='rgba(4,91,103,0.8)'; ctx.fillRect(0,0,W,large?38:28);
+  ctx.fillStyle=C.accent; ctx.font=`bold ${large?13:10}px monospace`; ctx.textAlign='left';
+  ctx.fillText('◉  POUR AI  —  2D MAPPING ANALYSIS', large?14:10, large?25:18);
+  ctx.fillStyle='rgba(255,255,255,.45)'; ctx.font=`${large?11:9}px monospace`; ctx.textAlign='right';
+  ctx.fillText(new Date().toLocaleTimeString('ko-KR'), W-(large?14:10), large?25:18);
+
+  // Building grid
+  const pad = large?56:36, cols=large?9:7, rows=large?11:8;
+  const bw=(W-pad*2)/cols, bh=(H-pad*2-( large?38:28))/rows;
+  const oy = large?38:28;
+
+  for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
+      const x=pad+c*bw, y=oy+pad/2+r*bh;
+      ctx.fillStyle='rgba(4,91,103,0.22)'; ctx.fillRect(x+2,y+2,bw-4,bh-4);
+      ctx.strokeStyle='rgba(0,196,212,0.15)'; ctx.lineWidth=1; ctx.strokeRect(x+2,y+2,bw-4,bh-4);
+    }
+  }
+
+  // Defects
+  const defects=[
+    {r:1,c:2,label:'균열',severity:'high'},{r:3,c:5,label:'박리',severity:'mid'},
+    {r:6,c:1,label:'누수',severity:'high'},{r:2,c:4,label:'균열',severity:'low'},
+    {r:5,c:6,label:'박리',severity:'mid'},{r:7,c:3,label:'누수',severity:'high'},
+  ];
+  defects.forEach((d,i)=>{
+    const phase=(t*0.04+i*0.8)%(Math.PI*2);
+    const pulse=Math.sin(phase)*0.25+0.75;
+    const cx2=pad+d.c*bw+bw/2, cy2=oy+pad/2+d.r*bh+bh/2;
+    const color=d.severity==='high'?C.red:d.severity==='mid'?C.orange:C.yellow;
+    const mr=large?12:8;
+
+    // Ripple
+    const rr=(((t*0.03+i*0.5)%1))*(large?36:24);
+    ctx.beginPath(); ctx.arc(cx2,cy2,rr,0,Math.PI*2);
+    ctx.strokeStyle=color+'44'; ctx.lineWidth=1.5; ctx.stroke();
+
+    // Marker
+    ctx.beginPath(); ctx.arc(cx2,cy2,mr,0,Math.PI*2);
+    ctx.fillStyle=color; ctx.globalAlpha=pulse; ctx.fill(); ctx.globalAlpha=1;
+    ctx.beginPath(); ctx.arc(cx2,cy2,mr*0.35,0,Math.PI*2);
+    ctx.fillStyle='#fff'; ctx.fill();
+
+    // Label
+    ctx.fillStyle='rgba(255,255,255,.8)'; ctx.font=`bold ${large?11:8}px sans-serif`; ctx.textAlign='center';
+    ctx.fillText(d.label, cx2, cy2+(mr+large?14:10));
+  });
+
+  // Scan line
+  const scanY=oy+pad/2+((t*1.1)%(H-oy-pad));
+  const sg=ctx.createLinearGradient(0,scanY-16,0,scanY+6);
+  sg.addColorStop(0,'rgba(0,196,212,0)'); sg.addColorStop(1,'rgba(0,196,212,0.3)');
+  ctx.fillStyle=sg; ctx.fillRect(pad,scanY-16,W-pad*2,22);
+
+  // Legend
+  const ly=H-(large?24:18);
+  [{c:C.red,l:'균열'},{c:C.orange,l:'박리'},{c:C.yellow,l:'누수'}].forEach((item,i)=>{
+    const lx=large?70+i*120:44+i*76;
+    ctx.beginPath(); ctx.arc(lx,ly,large?5:4,0,Math.PI*2); ctx.fillStyle=item.c; ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,.65)'; ctx.font=`${large?11:9}px sans-serif`; ctx.textAlign='left';
+    ctx.fillText(item.l, lx+(large?10:7), ly+(large?4:3));
+  });
+}
+
+// ── 3D RENDERING DRAW ────────────────────────────
+function draw3D(canvas, t, large) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  // BG
+  const bg=ctx.createLinearGradient(0,0,W,H);
+  bg.addColorStop(0,'#09111f'); bg.addColorStop(1,'#0c1e30');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+
+  // HUD bar
+  ctx.fillStyle='rgba(4,91,103,0.8)'; ctx.fillRect(0,0,W,large?38:28);
+  ctx.fillStyle=C.accent; ctx.font=`bold ${large?13:10}px monospace`; ctx.textAlign='left';
+  ctx.fillText('◉  POUR AI  —  3D RENDERING ANALYSIS', large?14:10, large?25:18);
+  const rot=((t*0.008)%(Math.PI*2)/(Math.PI*2)*360).toFixed(0);
+  ctx.fillStyle='rgba(255,255,255,.45)'; ctx.font=`${large?11:9}px monospace`; ctx.textAlign='right';
+  ctx.fillText(`ROT ${rot}°`, W-(large?14:10), large?25:18);
+
+  // Isometric building
+  const angle=t*0.008;
+  const cx2=W*0.5, cy2=H*0.55;
+  const bW=large?260:160, bH=large?300:190, depth=large?90:58;
+  const cos=Math.cos(angle+0.5), sin=Math.sin(angle+0.5)*0.48;
+  const iX=(x,y)=>cx2+(x-y)*cos;
+  const iY=(x,y,z)=>cy2+(x+y)*sin-z;
+  const floors=large?9:6;
+  const fH=bH/floors;
+
+  for(let f=floors-1;f>=0;f--){
+    const fz=f*fH, nfz=(f+1)*fH;
+    const shade=0.35+f/floors*0.45;
+
+    // Front
+    ctx.beginPath();
+    ctx.moveTo(iX(0,0),iY(0,0,nfz)); ctx.lineTo(iX(bW,0),iY(bW,0,nfz));
+    ctx.lineTo(iX(bW,0),iY(bW,0,fz)); ctx.lineTo(iX(0,0),iY(0,0,fz)); ctx.closePath();
+    ctx.fillStyle=`rgba(4,91,103,${shade})`; ctx.fill();
+    ctx.strokeStyle='rgba(0,196,212,0.18)'; ctx.lineWidth=1; ctx.stroke();
+
+    // Side
+    ctx.beginPath();
+    ctx.moveTo(iX(bW,0),iY(bW,0,nfz)); ctx.lineTo(iX(bW,depth),iY(bW,depth,nfz));
+    ctx.lineTo(iX(bW,depth),iY(bW,depth,fz)); ctx.lineTo(iX(bW,0),iY(bW,0,fz)); ctx.closePath();
+    ctx.fillStyle=`rgba(3,61,71,${shade*0.75})`; ctx.fill();
+    ctx.strokeStyle='rgba(0,196,212,0.12)'; ctx.stroke();
+
+    // Windows
+    const wc=large?5:3;
+    for(let w=0;w<wc;w++){
+      const wx=(w+0.5)/wc;
+      const wa=Math.sin(t*0.05+w+f)*0.4+0.35;
+      const wpx=iX(bW*wx,0), wpy=iY(bW*wx,0,fz+fH*0.5);
+      const ws=large?14:9;
+      ctx.fillStyle=`rgba(0,196,212,${wa})`; ctx.fillRect(wpx-ws/2,wpy-ws*0.3,ws,ws*0.55);
+    }
+  }
+
+  // Top
+  ctx.beginPath();
+  ctx.moveTo(iX(0,0),iY(0,0,bH)); ctx.lineTo(iX(bW,0),iY(bW,0,bH));
+  ctx.lineTo(iX(bW,depth),iY(bW,depth,bH)); ctx.lineTo(iX(0,depth),iY(0,depth,bH)); ctx.closePath();
+  ctx.fillStyle='rgba(6,122,138,0.65)'; ctx.fill();
+  ctx.strokeStyle=C.accent; ctx.lineWidth=1.5; ctx.stroke();
+
+  // Defect pins
+  const pins=[
+    {fx:0.2,fz:0.65,label:'균열',color:C.red},{fx:0.75,fz:0.38,label:'박리',color:C.orange},
+    {fx:0.5,fz:0.78,label:'누수',color:C.red},{fx:0.12,fz:0.22,label:'균열',color:C.yellow},
+  ];
+  pins.forEach((p,i)=>{
+    const phase=(t*0.05+i*1.2)%(Math.PI*2);
+    const bounce=Math.abs(Math.sin(phase))*(large?9:6);
+    const px2=iX(bW*p.fx,0), py2=iY(bW*p.fx,0,bH*p.fz+bounce);
+    const ph=large?24:16;
+
+    ctx.beginPath(); ctx.moveTo(px2,py2); ctx.lineTo(px2,py2+ph);
+    ctx.strokeStyle=p.color; ctx.lineWidth=1.5; ctx.stroke();
+
+    ctx.beginPath(); ctx.arc(px2,py2,large?9:6.5,0,Math.PI*2);
+    ctx.fillStyle=p.color; ctx.fill();
+    ctx.beginPath(); ctx.arc(px2,py2,large?3.5:2.5,0,Math.PI*2);
+    ctx.fillStyle='#fff'; ctx.fill();
+
+    const pr=(((t*0.04+i*0.7)%1))*(large?28:18);
+    ctx.beginPath(); ctx.arc(px2,py2,pr,0,Math.PI*2);
+    ctx.strokeStyle=p.color+'44'; ctx.lineWidth=1.2; ctx.stroke();
+
+    if(large){
+      ctx.fillStyle='rgba(255,255,255,.8)'; ctx.font='bold 11px sans-serif'; ctx.textAlign='center';
+      ctx.fillText(p.label, px2, py2-15);
+    }
+  });
+
+  // Coordinate panel (large only)
+  if(large){
+    ctx.fillStyle='rgba(4,91,103,0.35)'; ctx.strokeStyle='rgba(0,196,212,0.25)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.roundRect(W-130,H-78,118,64,8); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='rgba(0,196,212,0.75)'; ctx.font='10px monospace'; ctx.textAlign='left';
+    ctx.fillText('X: '+(W*0.5+Math.sin(t*0.02)*18).toFixed(1), W-116, H-56);
+    ctx.fillText('Y: '+(H*0.5+Math.cos(t*0.02)*14).toFixed(1), W-116, H-42);
+    ctx.fillText('Z: '+(290+Math.sin(t*0.015)*9).toFixed(1), W-116, H-28);
+  }
+}
+
+// ── ANIMATION LOOP ───────────────────────────────
+let frame=0, lbType=null;
+const c2d=document.getElementById('canvas2d');
+const c3d=document.getElementById('canvas3d');
+
+(function loop(){
+  frame++;
+  // Only draw small canvases if no image loaded
+  const wrap2=document.getElementById('wrap2d');
+  const wrap3=document.getElementById('wrap3d');
+  if(!wrap2.classList.contains('has-image')) draw2D(c2d,frame,false);
+  if(!wrap3.classList.contains('has-image')) draw3D(c3d,frame,false);
+  const lbCanvas=document.getElementById('lbCanvas');
+  if(lbType==='2d') draw2D(lbCanvas,frame,true);
+  else if(lbType==='3d') draw3D(lbCanvas,frame,true);
+  requestAnimationFrame(loop);
+})();
+
+// ── LIGHTBOX ─────────────────────────────────────
+function openLightbox(type){
+  lbType=type;
+  const lbCanvas=document.getElementById('lbCanvas');
+  const lbImg=document.getElementById('lbImg');
+  document.getElementById('lbTitle').textContent = type==='2d'?'2D 매핑 진단 화면':'3D 렌더링 진단 화면';
+  document.getElementById('lbDesc').textContent = type==='2d'?'평면 좌표로 하자 위치를 정밀 마킹한 AI 진단 결과입니다':'건물 입체 모델 위에 하자 포인트를 시각화한 AI 진단 결과입니다';
+
+  if (cardImages[type]) {
+    // Show uploaded image
+    lbCanvas.style.display = 'none';
+    lbImg.style.display = 'block';
+    lbImg.src = cardImages[type];
+    lbType = null; // stop canvas animation
+  } else {
+    // Show canvas animation
+    lbCanvas.style.display = 'block';
+    lbImg.style.display = 'none';
+    lbType = type;
+  }
+
+  document.getElementById('lightbox').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeLb(){ lbType=null; document.getElementById('lightbox').classList.remove('open'); document.body.style.overflow=''; }
+function closeLbOutside(e){ if(e.target===document.getElementById('lightbox')) closeLb(); }
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeLb(); });
+
+// ── FADE UP ──────────────────────────────────────
+const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');});},{threshold:.15});
+document.querySelectorAll('.fade-up').forEach(el=>obs.observe(el));
+
+// ── mAP BAR ──────────────────────────────────────
+const mbObs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){document.getElementById('mapBar').style.width='95.4%';mbObs.disconnect();}});},{threshold:.5});
+mbObs.observe(document.getElementById('mapBar'));
+
+// ── QnA ──────────────────────────────────────────
+function toggleQna(el){ el.parentElement.classList.toggle('open'); }
+
+// ── PER-CARD IMAGE UPLOAD ────────────────────────
+// Track which cards have user images loaded
+const cardImages = { '2d': null, '3d': null };
+
+function handleCardClick(type, event) {
+  const wrap = document.getElementById('wrap' + type);
+  if (wrap.classList.contains('has-image')) {
+    // Already has image → open lightbox
+    openLightbox(type);
+  } else {
+    // No image yet → trigger file picker
+    event.stopPropagation();
+    document.getElementById('input' + type).click();
+  }
+}
+
+function loadCardImage(type, event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const wrap = document.getElementById('wrap' + type);
+    const imgEl = document.getElementById('img' + type);
+    imgEl.src = e.target.result;
+    cardImages[type] = e.target.result;
+    wrap.classList.add('has-image');
+    // Update overlay to just show magnify
+    const overlayBtn = document.querySelector('#card' + type + ' .preview-overlay-btn');
+    if (overlayBtn) overlayBtn.textContent = '🔍 크게 보기';
+    // Update live badge to show UPLOADED
+    const live = document.getElementById('live' + type);
+    if (live) { live.innerHTML = '<span class="live-dot"></span>UPLOADED'; }
+  };
+  reader.readAsDataURL(file);
+}
+
+</script>
+</body>
+</html>
