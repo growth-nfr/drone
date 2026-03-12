@@ -207,17 +207,29 @@
   .qna-item.open .qna-a{max-height:300px;padding:0 24px 20px;}
 
   /* LIGHTBOX */
-  .lightbox{position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.9);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s;}
+  .lightbox{position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.92);backdrop-filter:blur(8px);display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s;}
   .lightbox.open{opacity:1;pointer-events:all;}
-  .lightbox-inner{max-width:920px;width:92%;position:relative;transform:scale(.95);transition:transform .3s;}
+  .lightbox-inner{max-width:940px;width:94%;position:relative;transform:scale(.95);transition:transform .3s;}
   .lightbox.open .lightbox-inner{transform:scale(1);}
   .lb-canvas-wrap{border-radius:var(--radius);overflow:hidden;background:#0a1628;}
   .lb-canvas-wrap canvas{width:100%;display:block;}
-  .lb-meta{margin-top:20px;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+  .lb-zoom-container{width:100%;height:78vh;overflow:hidden;border-radius:var(--radius);background:#0a0f1a;cursor:grab;position:relative;display:flex;align-items:center;justify-content:center;}
+  .lb-zoom-container.dragging{cursor:grabbing;}
+  .lb-zoom-container img{transform-origin:0 0;display:block;max-width:none;user-select:none;-webkit-user-drag:none;pointer-events:none;transition:none;}
+  .lb-zoom-hint{position:absolute;bottom:12px;right:14px;background:rgba(0,0,0,.55);color:rgba(255,255,255,.6);font-size:11px;font-weight:600;padding:5px 12px;border-radius:100px;pointer-events:none;letter-spacing:.3px;}
+  .lb-zoom-controls{position:absolute;bottom:12px;left:14px;display:flex;gap:6px;}
+  .lb-zoom-btn{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.22);color:white;font-size:18px;font-weight:300;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s;line-height:1;}
+  .lb-zoom-btn:hover{background:rgba(255,255,255,.28);}
+  .lb-meta{margin-top:14px;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;}
   .lb-title{color:white;font-size:18px;font-weight:800;letter-spacing:-.5px;}
   .lb-desc{color:rgba(255,255,255,.5);font-size:13px;margin-top:4px;}
   .lb-close{position:absolute;top:-16px;right:-16px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:white;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s;}
   .lb-close:hover{background:rgba(255,255,255,.25);}
+  /* COPY BUTTON */
+  .copy-btn{display:inline-flex;align-items:center;gap:8px;margin-top:20px;background:var(--primary);color:white;border:none;border-radius:var(--radius-sm);padding:13px 24px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .2s,transform .15s;box-shadow:var(--shadow-md);}
+  .copy-btn:hover{background:var(--primary-light);transform:translateY(-1px);}
+  .copy-btn.copied{background:#16a34a;}
+  .copy-toast{margin-top:10px;font-size:13px;color:#16a34a;font-weight:600;opacity:0;transition:opacity .3s;height:20px;}
 
   footer{background:var(--primary-dark);color:rgba(255,255,255,.55);text-align:center;padding:40px 32px;font-size:13px;line-height:1.8;}
   footer strong{color:rgba(255,255,255,.85);}
@@ -449,9 +461,19 @@
 <div class="lightbox" id="lightbox" onclick="closeLbOutside(event)">
   <div class="lightbox-inner">
     <button class="lb-close" onclick="closeLb()">✕</button>
-    <div class="lb-canvas-wrap">
+    <!-- canvas animation mode -->
+    <div class="lb-canvas-wrap" id="lbCanvasWrap">
       <canvas id="lbCanvas" width="880" height="500"></canvas>
-      <img id="lbImg" style="display:none;width:100%;max-height:80vh;object-fit:contain;border-radius:var(--radius);" src="" alt="">
+    </div>
+    <!-- uploaded image mode with zoom/pan -->
+    <div class="lb-zoom-container" id="lbZoomContainer" style="display:none;">
+      <img id="lbImg" src="" alt="">
+      <div class="lb-zoom-hint">🖱 스크롤로 확대 · 드래그로 이동</div>
+      <div class="lb-zoom-controls">
+        <button class="lb-zoom-btn" onclick="zoomStep(0.3)" title="확대">＋</button>
+        <button class="lb-zoom-btn" onclick="zoomStep(-0.3)" title="축소">－</button>
+        <button class="lb-zoom-btn" onclick="resetZoom()" title="초기화" style="font-size:13px;">↺</button>
+      </div>
     </div>
     <div class="lb-meta">
       <div><div class="lb-title" id="lbTitle"></div><div class="lb-desc" id="lbDesc"></div></div>
@@ -481,6 +503,12 @@
         <div class="form-row"><div class="form-label">▶ 대상 건물 / 구역</div><div class="form-value">아파트</div></div>
         <div class="form-row"><div class="form-label">▶ 촬영 방식</div><div class="form-value highlight">2D 매핑 방식 또는 3D 렌더링 방식</div></div>
         <div class="form-row"><div class="form-label">▶ 일정</div><div class="form-value">2026.01.19 ~ 01.30</div></div>
+      </div>
+      <div style="padding:0 28px 24px;">
+        <button class="copy-btn" id="copyBtn" onclick="copyForm()">
+          <span>📋</span> 양식 복사하기 (카카오톡 붙여넣기용)
+        </button>
+        <div class="copy-toast" id="copyToast">✅ 복사 완료! 카카오톡에 붙여넣기 하세요.</div>
       </div>
     </div>
     <div class="caution-box">
@@ -744,44 +772,138 @@ let frame=0, lbType=null;
 const c2d=document.getElementById('canvas2d');
 const c3d=document.getElementById('canvas3d');
 
-(function loop(){
+// Throttle small canvas redraws for performance
+let lastSmallDraw=0;
+(function loop(ts){
   frame++;
-  // Only draw small canvases if no image loaded
-  const wrap2=document.getElementById('wrap2d');
-  const wrap3=document.getElementById('wrap3d');
-  if(!wrap2.classList.contains('has-image')) draw2D(c2d,frame,false);
-  if(!wrap3.classList.contains('has-image')) draw3D(c3d,frame,false);
+  // Small canvases: cap at ~30fps to save CPU
+  if(ts - lastSmallDraw > 33){
+    lastSmallDraw=ts;
+    const wrap2=document.getElementById('wrap2d');
+    const wrap3=document.getElementById('wrap3d');
+    if(!wrap2.classList.contains('has-image')) draw2D(c2d,frame,false);
+    if(!wrap3.classList.contains('has-image')) draw3D(c3d,frame,false);
+  }
   const lbCanvas=document.getElementById('lbCanvas');
   if(lbType==='2d') draw2D(lbCanvas,frame,true);
   else if(lbType==='3d') draw3D(lbCanvas,frame,true);
   requestAnimationFrame(loop);
-})();
+})(0);
 
-// ── LIGHTBOX ─────────────────────────────────────
+// ── LIGHTBOX ZOOM / PAN ──────────────────────────
+let zoom=1, panX=0, panY=0;
+let isDragging=false, dragStartX=0, dragStartY=0, panStartX=0, panStartY=0;
+const MIN_ZOOM=0.5, MAX_ZOOM=8;
+
+function applyTransform(){
+  const img=document.getElementById('lbImg');
+  img.style.transform=`translate(${panX}px,${panY}px) scale(${zoom})`;
+  img.style.transformOrigin='center center';
+}
+
+function clampPan(){
+  const container=document.getElementById('lbZoomContainer');
+  const img=document.getElementById('lbImg');
+  const cw=container.clientWidth, ch=container.clientHeight;
+  const iw=img.naturalWidth*zoom, ih=img.naturalHeight*zoom;
+  const maxX=Math.max(0,(iw-cw)/2);
+  const maxY=Math.max(0,(ih-ch)/2);
+  panX=Math.max(-maxX,Math.min(maxX,panX));
+  panY=Math.max(-maxY,Math.min(maxY,panY));
+}
+
+function resetZoom(){zoom=1;panX=0;panY=0;applyTransform();}
+function zoomStep(delta){
+  zoom=Math.max(MIN_ZOOM,Math.min(MAX_ZOOM,zoom+delta));
+  clampPan(); applyTransform();
+}
+
+function initZoomPan(){
+  const container=document.getElementById('lbZoomContainer');
+  const img=document.getElementById('lbImg');
+
+  // Wheel zoom
+  container.addEventListener('wheel',(e)=>{
+    e.preventDefault();
+    const rect=container.getBoundingClientRect();
+    const mx=e.clientX-rect.left-rect.width/2;
+    const my=e.clientY-rect.top-rect.height/2;
+    const prevZoom=zoom;
+    const delta=e.deltaY<0?0.18:-0.18;
+    zoom=Math.max(MIN_ZOOM,Math.min(MAX_ZOOM,zoom+delta));
+    // Zoom toward cursor
+    const scale=zoom/prevZoom;
+    panX=mx+(panX-mx)*scale;
+    panY=my+(panY-my)*scale;
+    clampPan(); applyTransform();
+  },{passive:false});
+
+  // Mouse drag
+  container.addEventListener('mousedown',(e)=>{
+    isDragging=true; dragStartX=e.clientX; dragStartY=e.clientY;
+    panStartX=panX; panStartY=panY;
+    container.classList.add('dragging');
+  });
+  window.addEventListener('mousemove',(e)=>{
+    if(!isDragging) return;
+    panX=panStartX+(e.clientX-dragStartX);
+    panY=panStartY+(e.clientY-dragStartY);
+    clampPan(); applyTransform();
+  });
+  window.addEventListener('mouseup',()=>{
+    isDragging=false;
+    document.getElementById('lbZoomContainer').classList.remove('dragging');
+  });
+
+  // Touch pinch/pan
+  let lastTouches=[];
+  container.addEventListener('touchstart',(e)=>{lastTouches=[...e.touches];},{passive:true});
+  container.addEventListener('touchmove',(e)=>{
+    e.preventDefault();
+    if(e.touches.length===1 && lastTouches.length===1){
+      const dx=e.touches[0].clientX-lastTouches[0].clientX;
+      const dy=e.touches[0].clientY-lastTouches[0].clientY;
+      panX+=dx; panY+=dy; clampPan(); applyTransform();
+    } else if(e.touches.length===2 && lastTouches.length===2){
+      const prevD=Math.hypot(lastTouches[0].clientX-lastTouches[1].clientX,lastTouches[0].clientY-lastTouches[1].clientY);
+      const newD=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+      zoom=Math.max(MIN_ZOOM,Math.min(MAX_ZOOM,zoom*(newD/prevD)));
+      clampPan(); applyTransform();
+    }
+    lastTouches=[...e.touches];
+  },{passive:false});
+}
+initZoomPan();
+
+// ── LIGHTBOX OPEN/CLOSE ──────────────────────────
 function openLightbox(type){
-  lbType=type;
-  const lbCanvas=document.getElementById('lbCanvas');
+  const lbCanvasWrap=document.getElementById('lbCanvasWrap');
+  const lbZoom=document.getElementById('lbZoomContainer');
   const lbImg=document.getElementById('lbImg');
-  document.getElementById('lbTitle').textContent = type==='2d'?'2D 매핑 진단 화면':'3D 렌더링 진단 화면';
-  document.getElementById('lbDesc').textContent = type==='2d'?'평면 좌표로 하자 위치를 정밀 마킹한 AI 진단 결과입니다':'건물 입체 모델 위에 하자 포인트를 시각화한 AI 진단 결과입니다';
+  document.getElementById('lbTitle').textContent=type==='2d'?'2D 매핑 진단 화면':'3D 렌더링 진단 화면';
+  document.getElementById('lbDesc').textContent=type==='2d'?'평면 좌표로 하자 위치를 정밀 마킹한 AI 진단 결과입니다':'건물 입체 모델 위에 하자 포인트를 시각화한 AI 진단 결과입니다';
 
-  if (cardImages[type]) {
-    // Show uploaded image
-    lbCanvas.style.display = 'none';
-    lbImg.style.display = 'block';
-    lbImg.src = cardImages[type];
-    lbType = null; // stop canvas animation
+  if(cardImages[type]){
+    lbType=null;
+    lbCanvasWrap.style.display='none';
+    lbZoom.style.display='flex';
+    lbImg.src=cardImages[type];
+    // Wait for image to load before resetting zoom
+    lbImg.onload=()=>{ resetZoom(); };
+    if(lbImg.complete) resetZoom();
   } else {
-    // Show canvas animation
-    lbCanvas.style.display = 'block';
-    lbImg.style.display = 'none';
-    lbType = type;
+    lbType=type;
+    lbCanvasWrap.style.display='block';
+    lbZoom.style.display='none';
   }
-
   document.getElementById('lightbox').classList.add('open');
   document.body.style.overflow='hidden';
 }
-function closeLb(){ lbType=null; document.getElementById('lightbox').classList.remove('open'); document.body.style.overflow=''; }
+function closeLb(){
+  lbType=null;
+  document.getElementById('lightbox').classList.remove('open');
+  document.body.style.overflow='';
+}
 function closeLbOutside(e){ if(e.target===document.getElementById('lightbox')) closeLb(); }
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeLb(); });
 
@@ -796,40 +918,89 @@ mbObs.observe(document.getElementById('mapBar'));
 // ── QnA ──────────────────────────────────────────
 function toggleQna(el){ el.parentElement.classList.toggle('open'); }
 
-// ── PER-CARD IMAGE UPLOAD ────────────────────────
-// Track which cards have user images loaded
-const cardImages = { '2d': null, '3d': null };
+// ── PER-CARD IMAGE UPLOAD (PERFORMANCE OPTIMIZED) ─
+const cardImages={'2d':null,'3d':null};
 
-function handleCardClick(type, event) {
-  const wrap = document.getElementById('wrap' + type);
-  if (wrap.classList.contains('has-image')) {
-    // Already has image → open lightbox
+function handleCardClick(type,event){
+  const wrap=document.getElementById('wrap'+type);
+  if(wrap.classList.contains('has-image')){
     openLightbox(type);
   } else {
-    // No image yet → trigger file picker
     event.stopPropagation();
-    document.getElementById('input' + type).click();
+    document.getElementById('input'+type).click();
   }
 }
 
-function loadCardImage(type, event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const wrap = document.getElementById('wrap' + type);
-    const imgEl = document.getElementById('img' + type);
-    imgEl.src = e.target.result;
-    cardImages[type] = e.target.result;
-    wrap.classList.add('has-image');
-    // Update overlay to just show magnify
-    const overlayBtn = document.querySelector('#card' + type + ' .preview-overlay-btn');
-    if (overlayBtn) overlayBtn.textContent = '🔍 크게 보기';
-    // Update live badge to show UPLOADED
-    const live = document.getElementById('live' + type);
-    if (live) { live.innerHTML = '<span class="live-dot"></span>UPLOADED'; }
+function loadCardImage(type,event){
+  const file=event.target.files[0];
+  if(!file) return;
+
+  // Use ObjectURL for the full-res lightbox image (no base64 memory bloat)
+  const objectURL=URL.createObjectURL(file);
+  cardImages[type]=objectURL;
+
+  // Create a downsampled thumbnail for the card preview using canvas
+  const reader=new FileReader();
+  reader.onload=(e)=>{
+    const tmpImg=new Image();
+    tmpImg.onload=()=>{
+      // Thumbnail: max 960px wide
+      const maxW=960, scale=Math.min(1,maxW/tmpImg.width);
+      const tw=Math.round(tmpImg.width*scale), th=Math.round(tmpImg.height*scale);
+      const thumbCanvas=document.createElement('canvas');
+      thumbCanvas.width=tw; thumbCanvas.height=th;
+      thumbCanvas.getContext('2d').drawImage(tmpImg,0,0,tw,th);
+      const thumbUrl=thumbCanvas.toDataURL('image/jpeg',0.82);
+
+      const wrap=document.getElementById('wrap'+type);
+      const imgEl=document.getElementById('img'+type);
+      imgEl.src=thumbUrl; // card shows compressed thumbnail
+      wrap.classList.add('has-image');
+
+      const live=document.getElementById('live'+type);
+      if(live) live.innerHTML='<span class="live-dot"></span>UPLOADED';
+    };
+    tmpImg.src=e.target.result;
   };
   reader.readAsDataURL(file);
+}
+
+// ── COPY FORM ────────────────────────────────────
+function copyForm(){
+  const text=`📌 드론 촬영 견적 요청서
+▶ 요청 부서 / 담당자
+P.M / 이재훈
+▶ 연락처
+010-2620-1258
+▶ 촬영 대상지 주소
+[주소 입력]
+▶ 대상 건물 / 구역
+[건물명 입력]
+▶ 촬영 방식
+2D 매핑 방식 or 3D 렌더링 방식
+▶ 일정
+[희망 일정 입력]
+======================`;
+
+  navigator.clipboard.writeText(text).then(()=>{
+    const btn=document.getElementById('copyBtn');
+    const toast=document.getElementById('copyToast');
+    btn.classList.add('copied');
+    btn.innerHTML='<span>✅</span> 복사 완료!';
+    toast.style.opacity='1';
+    setTimeout(()=>{
+      btn.classList.remove('copied');
+      btn.innerHTML='<span>📋</span> 양식 복사하기 (카카오톡 붙여넣기용)';
+      toast.style.opacity='0';
+    },2500);
+  }).catch(()=>{
+    // Fallback for browsers without clipboard API
+    const ta=document.createElement('textarea');
+    ta.value=text; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta);
+    alert('복사 완료! 카카오톡에 붙여넣기 하세요.');
+  });
 }
 
 </script>
